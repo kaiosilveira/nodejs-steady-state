@@ -1,5 +1,5 @@
-[![Continuous Integration](https://github.com/kaiosilveira/nodejs-ts-express-template/actions/workflows/ci.yml/badge.svg)](https://github.com/kaiosilveira/nodejs-ts-express-template/actions/workflows/ci.yml)
+[![Continuous Integration](https://github.com/kaiosilveira/nodejs-steady-state/actions/workflows/ci.yml/badge.svg)](https://github.com/kaiosilveira/nodejs-steady-state/actions/workflows/ci.yml)
 
 # NodeJS Steady State
 
-Simple backend application built using Typescript and Express on top of NodeJS.
+Working implementation in NodeJS of the "steady state" pattern/philosophy as described in the "Release it!" book by Michael T. Nygard
