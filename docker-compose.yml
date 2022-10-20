@@ -4,6 +4,9 @@ networks:
   app-tier:
     driver: bridge
 
+volumes:
+  db:
+
 services:
   redis:
     image: 'redis:alpine'
@@ -11,6 +14,17 @@ services:
       - '6379:6379'
     networks:
       - app-tier
+
+  mongodb:
+    image: mongo:5.0.2
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    networks:
+      - app-tier
+    volumes:
+      - db:/data/db
+
   nodejs:
     restart: on-failure
     build: ./
@@ -20,3 +34,4 @@ services:
       - app-tier
     depends_on:
       - redis
+      - mongodb
