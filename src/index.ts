@@ -6,7 +6,7 @@ import ExpressAppFactory from './presentation/express';
 const PORT = Number(process.env.PORT) || 8080;
 const app = ExpressAppFactory.createApp();
 
-http.createServer(app).listen(PORT, async () => {
+http.createServer(app.instance).listen(PORT, async () => {
   console.log(`server listening at ${PORT} 🚀`);
 
   const redisClient = Redis.createClient({ url: 'redis://redis:6379' });

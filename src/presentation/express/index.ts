@@ -5,13 +5,13 @@ import PresentationResourcesManager from '../resources';
 
 export default class ExpressAppFactory {
   static createApp() {
-    const app = Express();
+    const instance = Express();
 
-    app.use(Helmet());
-    app.use(Express.json());
-    app.use(Express.urlencoded({ extended: true }));
-    app.use(PresentationResourcesManager.configureRouter(Express.Router()));
+    instance.use(Helmet());
+    instance.use(Express.json());
+    instance.use(Express.urlencoded({ extended: true }));
+    instance.use(PresentationResourcesManager.configureRouter(Express.Router()));
 
-    return app;
+    return { instance };
   }
 }
