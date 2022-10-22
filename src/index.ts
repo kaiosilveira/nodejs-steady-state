@@ -54,5 +54,23 @@ async function run() {
 
       process.exit(0);
     });
+
+    process.on('uncaughtException', (err: Error) => {
+      logger.error({
+        message: 'A Fatal error has occurred',
+        errMsg: err.message,
+        stack: err.stack,
+      });
+      process.exit(1);
+    });
+
+    process.on('unhandledRejection', (err: Error) => {
+      logger.error({
+        message: 'A rejected promise was not handled properly, causing the app to exit',
+        errMsg: err.message,
+        stack: err.stack,
+      });
+      process.exit(1);
+    });
   });
 }
