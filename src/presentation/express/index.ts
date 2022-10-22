@@ -31,6 +31,7 @@ export default class ExpressAppFactory {
     instance.use(
       PresentationResourcesManager.configureRouter({
         appState,
+        logger,
         inMemoryDatabaseClient,
         router: Express.Router(),
       })
