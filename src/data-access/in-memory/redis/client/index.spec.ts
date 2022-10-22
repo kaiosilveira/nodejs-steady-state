@@ -93,23 +93,21 @@ describe('ManagedRedisClient', () => {
   describe('addToList', () => {
     it('should throw an error if key is empty', async () => {
       const db = new ManagedRedisClient({ logger, redisClient: fakeRedisClient });
-      await expect(async () => await db.addToList('', 0, { key: 'value' })).rejects.toThrow(
+      await expect(async () => await db.addToList('', { key: 'value' })).rejects.toThrow(
         'Invalid key. Expected a non-empty string.'
       );
     });
 
     it('should create a key containing a list of items with a specified expire time', async () => {
-      const EXPIRE_TIME_IN_SECONDS = 60;
       const key = 'my:key';
       const db = new ManagedRedisClient({ logger, redisClient: fakeRedisClient });
 
-      await db.addToList(key, EXPIRE_TIME_IN_SECONDS, { key: 'value1' }, { key: 'value2' });
+      await db.addToList(key, { key: 'value1' }, { key: 'value2' });
 
       expect(fakeLPushFn).toHaveBeenCalledWith(key, [
         JSON.stringify({ key: 'value1' }),
         JSON.stringify({ key: 'value2' }),
       ]);
-      expect(fakeExpireAtFn).toHaveBeenCalledWith(key, EXPIRE_TIME_IN_SECONDS);
     });
   });
 

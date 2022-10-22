@@ -54,15 +54,10 @@ export class ManagedRedisClient implements InMemoryDatabase {
     });
   }
 
-  async addToList(key: string, expireTimeInSeconds: number, ...values: Object[]): Promise<void> {
+  async addToList(key: string, ...values: Object[]): Promise<void> {
     this._validateKey(key);
-
-    await this._client.lPush(
-      key,
-      values.map(v => JSON.stringify(v))
-    );
-
-    await this._client.expireAt(key, expireTimeInSeconds);
+    const stringifiedValues = values.map(v => JSON.stringify(v));
+    await this._client.lPush(key, stringifiedValues);
   }
 
   async getList(key: string): Promise<Object[]> {
