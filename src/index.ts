@@ -1,9 +1,10 @@
 import http from 'http';
 import * as Redis from 'redis';
-import Mongoose from 'mongoose';
+
 import ExpressAppFactory from './presentation/express';
 import ConsoleLogger from './application/observability/logger/console';
 import { ManagedRedisClient } from './data-access/in-memory/redis/client';
+import MongoDBConnectionFactory from './data-access/disk/mongodb/connection-factory';
 
 const PORT = Number(process.env.PORT) || 8080;
 const app = ExpressAppFactory.createApp();
@@ -20,6 +21,10 @@ http.createServer(app.instance).listen(PORT, async () => {
 
   await redisClient.connect();
 
-  const mongodbConn = Mongoose.createConnection('mongodb://mongodb');
-  mongodbConn.on('connected', () => logger.info({ message: 'MongoDB connected' }));
+  app.attachInMemoryDbClient(redisClient);
+  app.attachDiskDatabaseConnection(
+    new MongoDBConnectionFactory({ logger }).createConnection({
+      url: 'mongodb://mongodb',
+    })
+  );
 });
