@@ -1,14 +1,16 @@
 import RealtimeGeolocationController from '.';
 import FakeInMemoryDatabase from '../../../../data-access/in-memory/fake';
+import FakeLogger from '../../../../application/observability/logger/fake';
 import FakeExpressFactory from '../../../../__mocks__/express/factory';
 
-describe('RealtimeGeolocationController', () => {
+describe.skip('RealtimeGeolocationController', () => {
   const itemId = 'item-id-1';
   const lat = -26.13213;
   const lng = -46.31423;
   const fakeAddToListFn = jest.fn();
   const fakeGetListFn = jest.fn();
   const inMemoryDatabaseClient = new FakeInMemoryDatabase();
+  const logger = new FakeLogger();
 
   beforeEach(() => {
     jest.spyOn(inMemoryDatabaseClient, 'addToList').mockImplementation(fakeAddToListFn);
@@ -43,7 +45,7 @@ describe('RealtimeGeolocationController', () => {
       const spyOnStatus = jest.spyOn(res, 'status');
       const spyOnJSON = jest.spyOn(res, 'json');
 
-      const ctrl = new RealtimeGeolocationController({ inMemoryDatabaseClient });
+      const ctrl = new RealtimeGeolocationController({ logger, inMemoryDatabaseClient });
       await ctrl.processGeolocationInfo(req, res);
 
       expect(spyOnStatus).toHaveBeenCalledWith(400);
@@ -56,7 +58,7 @@ describe('RealtimeGeolocationController', () => {
       const spyOnStatus = jest.spyOn(res, 'status');
       const spyOnJSON = jest.spyOn(res, 'json');
 
-      const ctrl = new RealtimeGeolocationController({ inMemoryDatabaseClient });
+      const ctrl = new RealtimeGeolocationController({ logger, inMemoryDatabaseClient });
       await ctrl.processGeolocationInfo(req, res);
 
       expect(spyOnStatus).toHaveBeenCalledWith(400);
@@ -75,7 +77,7 @@ describe('RealtimeGeolocationController', () => {
       const spyOnStatus = jest.spyOn(res, 'status');
       const spyOnJSON = jest.spyOn(res, 'json');
 
-      const ctrl = new RealtimeGeolocationController({ inMemoryDatabaseClient });
+      const ctrl = new RealtimeGeolocationController({ logger, inMemoryDatabaseClient });
       await ctrl.processGeolocationInfo(req, res);
 
       expect(spyOnStatus).toHaveBeenCalledWith(400);
@@ -94,7 +96,7 @@ describe('RealtimeGeolocationController', () => {
       const spyOnStatus = jest.spyOn(res, 'status');
       const spyOnJSON = jest.spyOn(res, 'json');
 
-      const ctrl = new RealtimeGeolocationController({ inMemoryDatabaseClient });
+      const ctrl = new RealtimeGeolocationController({ logger, inMemoryDatabaseClient });
       await ctrl.processGeolocationInfo(req, res);
 
       expect(spyOnStatus).toHaveBeenCalledWith(400);
@@ -113,7 +115,7 @@ describe('RealtimeGeolocationController', () => {
       const spyOnStatus = jest.spyOn(res, 'status');
       const spyOnJSON = jest.spyOn(res, 'json');
 
-      const ctrl = new RealtimeGeolocationController({ inMemoryDatabaseClient });
+      const ctrl = new RealtimeGeolocationController({ logger, inMemoryDatabaseClient });
       await ctrl.processGeolocationInfo(req, res);
 
       expect(spyOnStatus).toHaveBeenCalledWith(400);
@@ -133,7 +135,33 @@ describe('RealtimeGeolocationController', () => {
       const res = FakeExpressFactory.createResponse();
       const spyOnStatus = jest.spyOn(res, 'status');
 
-      const ctrl = new RealtimeGeolocationController({ inMemoryDatabaseClient });
+      const ctrl = new RealtimeGeolocationController({ logger, inMemoryDatabaseClient });
+      await ctrl.processGeolocationInfo(req, res);
+
+      expect(spyOnStatus).toHaveBeenCalledWith(201);
+      expect(fakeAddToListFn).toHaveBeenCalledWith(`${itemId}:latest_coordinates`, [lat, lng]);
+    });
+
+    it.only('should remove the first entry in the list and add the new one, keeping the list with a max of 100 items', async () => {
+      const cachedLocations: Array<Array<number>> = [[-26.0, -46.0]];
+      for (let i = 0; i < 99; i++) {
+        cachedLocations.push([-26.11111, -46.11111]);
+      }
+
+      fakeGetListFn.mockResolvedValue(cachedLocations);
+      jest.spyOn(inMemoryDatabaseClient, 'getList').mockImplementation(fakeGetListFn);
+      jest.spyOn(inMemoryDatabaseClient, 'addToList').mockImplementation(fakeAddToListFn);
+
+      const latestLatLng = [lat, lng];
+      const req = FakeExpressFactory.createRequest({
+        params: { itemId },
+        body: { coordinates: latestLatLng },
+      });
+
+      const res = FakeExpressFactory.createResponse();
+      const spyOnStatus = jest.spyOn(res, 'status');
+
+      const ctrl = new RealtimeGeolocationController({ logger, inMemoryDatabaseClient });
       await ctrl.processGeolocationInfo(req, res);
 
       expect(spyOnStatus).toHaveBeenCalledWith(201);
@@ -155,7 +183,7 @@ describe('RealtimeGeolocationController', () => {
       const spyOnStatus = jest.spyOn(res, 'status');
       const spyOnJSON = jest.spyOn(res, 'json');
 
-      const ctrl = new RealtimeGeolocationController({ inMemoryDatabaseClient });
+      const ctrl = new RealtimeGeolocationController({ logger, inMemoryDatabaseClient });
       await ctrl.getLatestGeolocationInfo(req, res);
 
       expect(spyOnStatus).toHaveBeenCalledWith(400);
@@ -169,7 +197,7 @@ describe('RealtimeGeolocationController', () => {
       const res = FakeExpressFactory.createResponse();
       const spyOnJSON = jest.spyOn(res, 'json');
 
-      const ctrl = new RealtimeGeolocationController({ inMemoryDatabaseClient });
+      const ctrl = new RealtimeGeolocationController({ logger, inMemoryDatabaseClient });
       await ctrl.getLatestGeolocationInfo(req, res);
 
       expect(spyOnJSON).toHaveBeenCalledWith(cachedLocations);
