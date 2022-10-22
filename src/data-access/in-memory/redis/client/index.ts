@@ -6,7 +6,7 @@ import {
   RedisScripts,
 } from 'redis';
 
-import InMemoryDatabase from '..';
+import InMemoryDatabase from '../..';
 
 export type RedisClient = RedisClientType<
   RedisDefaultModules & RedisModules,
