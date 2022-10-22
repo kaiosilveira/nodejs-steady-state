@@ -2,8 +2,8 @@ import { Request, Response } from 'express';
 import FakeExpressResponse from '../response';
 
 export default class FakeExpressFactory {
-  static createRequest({ headers, body } = { headers: {}, body: {} }): Request {
-    return { headers, body } as unknown as Request;
+  static createRequest({ headers, body, ctx } = { headers: {}, body: {}, ctx: {} }): Request {
+    return { headers, body, context: ctx } as unknown as Request;
   }
 
   static createResponse(): Response {
