@@ -1,8 +1,10 @@
 import { ManagedRedisClient, RedisClient } from '.';
+import Logger from '../../../../application/observability/logger';
 
 const noop = () => {};
 
 describe('ManagedRedisClient', () => {
+  const logger = { error: jest.fn() } as unknown as Logger;
   const fakeRedisClient = {
     get: noop,
     set: noop,
@@ -17,7 +19,7 @@ describe('ManagedRedisClient', () => {
     it('should initiate a connection with the Redis server', async () => {
       const spyOnConnect = jest.spyOn(fakeRedisClient, 'connect');
 
-      const db = new ManagedRedisClient({ redisClient: fakeRedisClient });
+      const db = new ManagedRedisClient({ logger, redisClient: fakeRedisClient });
       await db.connect();
 
       expect(spyOnConnect).toHaveBeenCalledTimes(1);
@@ -28,7 +30,7 @@ describe('ManagedRedisClient', () => {
     it('should disconnect from the Redis server', async () => {
       const spyOnDisconnect = jest.spyOn(fakeRedisClient, 'disconnect');
 
-      const db = new ManagedRedisClient({ redisClient: fakeRedisClient });
+      const db = new ManagedRedisClient({ logger, redisClient: fakeRedisClient });
       await db.disconnect();
 
       expect(spyOnDisconnect).toHaveBeenCalledTimes(1);
@@ -37,7 +39,7 @@ describe('ManagedRedisClient', () => {
 
   describe('set', () => {
     it('should throw an error if key is empty', async () => {
-      const db = new ManagedRedisClient({ redisClient: fakeRedisClient });
+      const db = new ManagedRedisClient({ logger, redisClient: fakeRedisClient });
       await expect(async () => await db.set('', { key: 'value' }, 10)).rejects.toThrow(
         'Invalid key. Expected a non-empty string.'
       );
@@ -49,7 +51,7 @@ describe('ManagedRedisClient', () => {
       const key = 'my:key';
       const value = { key: 'value' };
 
-      const db = new ManagedRedisClient({ redisClient: fakeRedisClient });
+      const db = new ManagedRedisClient({ logger, redisClient: fakeRedisClient });
       await db.set(key, value, EXPIRE_TIME_IN_SECONDS);
 
       expect(spyOnSet).toHaveBeenCalledWith(key, JSON.stringify(value), {
@@ -60,7 +62,7 @@ describe('ManagedRedisClient', () => {
 
   describe('get', () => {
     it('should throw an error if key is empty', async () => {
-      const db = new ManagedRedisClient({ redisClient: fakeRedisClient });
+      const db = new ManagedRedisClient({ logger, redisClient: fakeRedisClient });
       await expect(async () => await db.get('')).rejects.toThrow(
         'Invalid key. Expected a non-empty string.'
       );
@@ -69,7 +71,7 @@ describe('ManagedRedisClient', () => {
     it('should return undefined if the key is not parsable', async () => {
       jest.spyOn(fakeRedisClient, 'get').mockResolvedValue(null);
 
-      const db = new ManagedRedisClient({ redisClient: fakeRedisClient });
+      const db = new ManagedRedisClient({ logger, redisClient: fakeRedisClient });
       const result = await db.get('key');
 
       expect(result).toEqual(undefined);
@@ -79,7 +81,7 @@ describe('ManagedRedisClient', () => {
       const value = { key: 'value' };
       jest.spyOn(fakeRedisClient, 'get').mockResolvedValue(JSON.stringify(value));
 
-      const db = new ManagedRedisClient({ redisClient: fakeRedisClient });
+      const db = new ManagedRedisClient({ logger, redisClient: fakeRedisClient });
       const result = await db.get<typeof value>('key');
 
       expect(result).toEqual(value);
@@ -88,7 +90,7 @@ describe('ManagedRedisClient', () => {
 
   describe('addToList', () => {
     it('should throw an error if key is empty', async () => {
-      const db = new ManagedRedisClient({ redisClient: fakeRedisClient });
+      const db = new ManagedRedisClient({ logger, redisClient: fakeRedisClient });
       await expect(async () => await db.addToList('', 0, { key: 'value' })).rejects.toThrow(
         'Invalid key. Expected a non-empty string.'
       );
@@ -99,7 +101,7 @@ describe('ManagedRedisClient', () => {
       const key = 'my:key';
       const spyOnLPush = jest.spyOn(fakeRedisClient, 'lPush');
       const spyOnExpireAt = jest.spyOn(fakeRedisClient, 'expireAt');
-      const db = new ManagedRedisClient({ redisClient: fakeRedisClient });
+      const db = new ManagedRedisClient({ logger, redisClient: fakeRedisClient });
 
       await db.addToList(key, EXPIRE_TIME_IN_SECONDS, { key: 'value1' }, { key: 'value2' });
 
@@ -113,7 +115,7 @@ describe('ManagedRedisClient', () => {
 
   describe('getList', () => {
     it('should throw an error if key is empty', async () => {
-      const db = new ManagedRedisClient({ redisClient: fakeRedisClient });
+      const db = new ManagedRedisClient({ logger, redisClient: fakeRedisClient });
       await expect(async () => await db.getList('')).rejects.toThrow(
         'Invalid key. Expected a non-empty string.'
       );
@@ -123,7 +125,7 @@ describe('ManagedRedisClient', () => {
       const storedData = [JSON.stringify({ key: 'value1' }), JSON.stringify({ key: 'value2' })];
       const spyOnLRange = jest.spyOn(fakeRedisClient, 'lRange').mockResolvedValue(storedData);
 
-      const db = new ManagedRedisClient({ redisClient: fakeRedisClient });
+      const db = new ManagedRedisClient({ logger, redisClient: fakeRedisClient });
       const result = await db.getList('my:key');
 
       expect(result).toEqual(storedData.map(d => JSON.parse(d)));

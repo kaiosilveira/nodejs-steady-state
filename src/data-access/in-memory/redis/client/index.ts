@@ -7,6 +7,7 @@ import {
 } from 'redis';
 
 import InMemoryDatabase from '../..';
+import Logger from '../../../../application/observability/logger';
 
 export type RedisClient = RedisClientType<
   RedisDefaultModules & RedisModules,
@@ -16,9 +17,11 @@ export type RedisClient = RedisClientType<
 
 export class ManagedRedisClient implements InMemoryDatabase {
   private readonly _client: RedisClient;
+  private readonly _logger: Logger;
 
-  constructor({ redisClient }: { redisClient: RedisClient }) {
+  constructor({ redisClient, logger }: { redisClient: RedisClient; logger: Logger }) {
     this._client = redisClient;
+    this._logger = logger;
   }
 
   async connect(): Promise<void> {
