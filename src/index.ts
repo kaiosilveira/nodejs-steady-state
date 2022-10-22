@@ -9,13 +9,9 @@ import InMemoryApplicationState from './presentation/application-state/in-memory
 
 const PORT = Number(process.env.PORT) || 8080;
 const appState = new InMemoryApplicationState();
-const app = ExpressAppFactory.createApp({ appState });
+const logger = new ConsoleLogger({ appState });
 
-http.createServer(app.instance).listen(PORT, async () => {
-  const logger = new ConsoleLogger({ appState });
-
-  logger.info({ message: `server listening at ${PORT} 🚀` });
-
+(async () => {
   const redisClient = new ManagedRedisClient({
     logger,
     redisClient: Redis.createClient({ url: 'redis://redis:6379' }),
@@ -23,12 +19,32 @@ http.createServer(app.instance).listen(PORT, async () => {
 
   await redisClient.connect();
 
-  app.attachInMemoryDbClient(redisClient);
-  app.attachDiskDatabaseConnection(
-    new MongoDBConnectionFactory({ logger }).createConnection({
-      url: 'mongodb://mongodb',
-    })
-  );
+  const diskDbConn = new MongoDBConnectionFactory({ logger }).createConnection({
+    url: 'mongodb://mongodb',
+  });
 
-  appState.setReady(true);
-});
+  const app = ExpressAppFactory.createApp({
+    appState,
+    inMemoryDatabaseClient: redisClient,
+    diskDatabaseConnection: diskDbConn,
+    logger,
+  });
+
+  http.createServer(app.instance).listen(PORT, async () => {
+    logger.info({ message: `server listening at ${PORT} 🚀` });
+
+    appState.setReady(true);
+
+    process.on('SIGINT', async () => {
+      logger.info({ message: 'closing in-memory db connection...' });
+      await redisClient.disconnect();
+      logger.info({ message: 'in-memory db connection closed' });
+
+      logger.info({ message: 'closing disk-db connection...' });
+      await diskDbConn.close();
+      logger.info({ message: 'disk-db connection closed' });
+
+      process.exit(0);
+    });
+  });
+})();
