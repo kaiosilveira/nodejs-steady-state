@@ -30,7 +30,7 @@ export class ManagedRedisClient implements InMemoryDatabase {
     );
 
     await this._client.connect();
-    this._logger.info('Redis connected');
+    this._logger.info({ message: 'Redis connected' });
   }
 
   async disconnect(): Promise<void> {
