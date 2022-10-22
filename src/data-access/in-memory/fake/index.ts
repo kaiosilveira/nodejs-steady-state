@@ -10,4 +10,7 @@ export default class FakeInMemoryDatabase implements InMemoryDatabase {
   addToList(key: string, ...values: Object[]): Promise<void> {
     throw new Error('Method not implemented.');
   }
+  getList(key: string): Promise<Object[]> {
+    throw new Error('Method not implemented.');
+  }
 }
