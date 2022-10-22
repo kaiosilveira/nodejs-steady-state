@@ -2,7 +2,7 @@ import { ManagedRedisClient, RedisClient } from '.';
 import Logger from '../../../../application/observability/logger';
 
 describe('ManagedRedisClient', () => {
-  const logger = { error: jest.fn() } as unknown as Logger;
+  const logger = { error: jest.fn(), info: jest.fn() } as unknown as Logger;
   const fakeLRangeFn = jest.fn();
   const fakeLPushFn = jest.fn();
   const fakeExpireAtFn = jest.fn();
