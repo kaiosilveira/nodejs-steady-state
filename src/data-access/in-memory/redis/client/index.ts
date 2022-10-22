@@ -21,6 +21,14 @@ export class ManagedRedisClient implements InMemoryDatabase {
     this._client = redisClient;
   }
 
+  async connect(): Promise<void> {
+    await this._client.connect();
+  }
+
+  async disconnect(): Promise<void> {
+    await this._client.disconnect();
+  }
+
   async get<T>(key: string): Promise<T | undefined> {
     this._validateKey(key);
 

@@ -9,7 +9,31 @@ describe('ManagedRedisClient', () => {
     lPush: noop,
     lRange: noop,
     expireAt: noop,
+    connect: noop,
+    disconnect: noop,
   } as RedisClient;
+
+  describe('connect', () => {
+    it('should initiate a connection with the Redis server', async () => {
+      const spyOnConnect = jest.spyOn(fakeRedisClient, 'connect');
+
+      const db = new ManagedRedisClient({ redisClient: fakeRedisClient });
+      await db.connect();
+
+      expect(spyOnConnect).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('disconnect', () => {
+    it('should disconnect from the Redis server', async () => {
+      const spyOnDisconnect = jest.spyOn(fakeRedisClient, 'disconnect');
+
+      const db = new ManagedRedisClient({ redisClient: fakeRedisClient });
+      await db.disconnect();
+
+      expect(spyOnDisconnect).toHaveBeenCalledTimes(1);
+    });
+  });
 
   describe('set', () => {
     it('should throw an error if key is empty', async () => {
