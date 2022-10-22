@@ -90,7 +90,7 @@ describe('ManagedRedisClient', () => {
     });
   });
 
-  describe('addToList', () => {
+  describe.skip('addToList', () => {
     it('should throw an error if key is empty', async () => {
       const db = new ManagedRedisClient({ logger, redisClient: fakeRedisClient });
       await expect(async () => await db.addToList('', { key: 'value' })).rejects.toThrow(
