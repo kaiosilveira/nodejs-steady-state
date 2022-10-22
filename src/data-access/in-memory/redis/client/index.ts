@@ -25,6 +25,10 @@ export class ManagedRedisClient implements InMemoryDatabase {
   }
 
   async connect(): Promise<void> {
+    this._client.on('error', (err: Error) =>
+      this._logger.error({ message: 'Redis Client Error', errMsg: err.message, stack: err.stack })
+    );
+
     await this._client.connect();
   }
 

@@ -13,7 +13,8 @@ describe('ManagedRedisClient', () => {
     expireAt: noop,
     connect: noop,
     disconnect: noop,
-  } as RedisClient;
+    on: noop,
+  } as unknown as RedisClient;
 
   describe('connect', () => {
     it('should initiate a connection with the Redis server', async () => {
