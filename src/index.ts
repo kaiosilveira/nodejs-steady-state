@@ -5,12 +5,14 @@ import ExpressAppFactory from './presentation/express';
 import ConsoleLogger from './application/observability/logger/console';
 import { ManagedRedisClient } from './data-access/in-memory/redis/client';
 import MongoDBConnectionFactory from './data-access/disk/mongodb/connection-factory';
+import InMemoryApplicationState from './presentation/application-state/in-memory';
 
 const PORT = Number(process.env.PORT) || 8080;
-const app = ExpressAppFactory.createApp();
+const appState = new InMemoryApplicationState();
+const app = ExpressAppFactory.createApp({ appState });
 
 http.createServer(app.instance).listen(PORT, async () => {
-  const logger = new ConsoleLogger();
+  const logger = new ConsoleLogger({ appState });
 
   logger.info({ message: `server listening at ${PORT} 🚀` });
 
@@ -27,4 +29,6 @@ http.createServer(app.instance).listen(PORT, async () => {
       url: 'mongodb://mongodb',
     })
   );
+
+  appState.setReady(true);
 });
