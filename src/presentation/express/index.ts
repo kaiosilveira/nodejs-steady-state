@@ -1,31 +1,41 @@
 import Express from 'express';
 import Helmet from 'helmet';
 import Mongoose from 'mongoose';
-import InMemoryDatabase from '../../data-access/in-memory';
-import ApplicationState from '../application-state';
+import Crypto from 'node:crypto';
+
 import PresentationResourcesManager from '../resources';
+import IncomingRequestMiddleware from '../middlewares/incoming-request';
+import OutgoingResponseMiddleware from '../middlewares/outgoing-response';
+import ApplicationState from '../application-state';
+import Logger from '../../application/observability/logger';
+import InMemoryDatabase from '../../data-access/in-memory';
 
 export default class ExpressAppFactory {
-  static createApp({ appState }: { appState: ApplicationState }) {
+  static createApp({
+    logger,
+    inMemoryDatabaseClient,
+    appState,
+  }: {
+    logger: Logger;
+    inMemoryDatabaseClient: InMemoryDatabase;
+    diskDatabaseConnection: Mongoose.Connection;
+    appState: ApplicationState;
+  }) {
     const instance = Express();
-    let inMemoryDatabaseClient: InMemoryDatabase;
-    let diskDatabaseConnection: Mongoose.Connection;
 
     instance.use(Helmet());
     instance.use(Express.json());
     instance.use(Express.urlencoded({ extended: true }));
+    instance.use(new IncomingRequestMiddleware({ logger, generateUUID: Crypto.randomUUID }).hook);
+    instance.use(new OutgoingResponseMiddleware({ logger }).hook);
     instance.use(
-      PresentationResourcesManager.configureRouter({ appState, router: Express.Router() })
+      PresentationResourcesManager.configureRouter({
+        appState,
+        inMemoryDatabaseClient,
+        router: Express.Router(),
+      })
     );
 
-    return {
-      instance,
-      attachInMemoryDbClient: (client: InMemoryDatabase) => {
-        inMemoryDatabaseClient = client;
-      },
-      attachDiskDatabaseConnection: (conn: Mongoose.Connection) => {
-        diskDatabaseConnection = conn;
-      },
-    };
+    return { instance };
   }
 }
