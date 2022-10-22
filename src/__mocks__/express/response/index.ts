@@ -1,18 +1,25 @@
-import { Response } from 'express';
+import EventEmitter from 'events';
 
-export default class FakeExpressResponse {
-  private _statusCode: number;
+export default class FakeExpressResponse extends EventEmitter {
+  statusCode: number;
+  body: object;
+  callbacks: Object;
 
-  constructor() {
-    this._statusCode = 200;
+  constructor({ statusCode, body = {} }: { statusCode: number; body?: any } = { statusCode: 200 }) {
+    super();
+    this.statusCode = statusCode;
+    this.body = body;
+    this.callbacks = {};
   }
 
-  status(code: number): Response {
-    this._statusCode = code;
-    return this as unknown as Response;
+  status(status: number) {
+    this.statusCode = status;
+    return this;
   }
 
-  json(body: object): any {
-    return { status: this._statusCode, body };
+  json(obj: any): any {
+    return { body: obj, status: this.statusCode };
   }
+
+  end() {}
 }
