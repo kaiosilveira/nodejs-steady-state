@@ -7,14 +7,22 @@ import { ManagedRedisClient } from './data-access/in-memory/redis/client';
 import MongoDBConnectionFactory from './data-access/disk/mongodb/connection-factory';
 import InMemoryApplicationState from './presentation/application-state/in-memory';
 
-const PORT = Number(process.env.PORT) || 8080;
 const appState = new InMemoryApplicationState();
 const logger = new ConsoleLogger({ appState });
 
-(async () => {
+const { APP_PORT, REDIS_PORT, MONGODB_PORT } = process.env;
+const env = {
+  APP_PORT: Number(APP_PORT) || 8080,
+  REDIS_PORT: Number(REDIS_PORT),
+  MONGODB_PORT: Number(MONGODB_PORT),
+};
+
+run();
+
+async function run() {
   const redisClient = new ManagedRedisClient({
     logger,
-    redisClient: Redis.createClient({ url: 'redis://redis:6379' }),
+    redisClient: Redis.createClient({ url: `redis://redis:${env.REDIS_PORT}` }),
   });
 
   await redisClient.connect();
@@ -30,8 +38,8 @@ const logger = new ConsoleLogger({ appState });
     logger,
   });
 
-  http.createServer(app.instance).listen(PORT, async () => {
-    logger.info({ message: `server listening at ${PORT} 🚀` });
+  http.createServer(app.instance).listen(env.APP_PORT, async () => {
+    logger.info({ message: `server listening at ${env.APP_PORT} 🚀` });
 
     appState.setReady(true);
 
@@ -47,4 +55,4 @@ const logger = new ConsoleLogger({ appState });
       process.exit(0);
     });
   });
-})();
+}
