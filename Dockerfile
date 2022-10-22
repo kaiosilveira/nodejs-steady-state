@@ -9,10 +9,10 @@ WORKDIR /app
 COPY package*.json ./
 
 RUN npm install
+RUN npm run test
 
 COPY . .
 
-RUN npm run test
 RUN npm run build
 
 EXPOSE $PORT
