@@ -90,7 +90,7 @@ describe('ManagedRedisClient', () => {
     });
   });
 
-  describe.skip('addToList', () => {
+  describe('addToList', () => {
     it('should throw an error if key is empty', async () => {
       const db = new ManagedRedisClient({ logger, redisClient: fakeRedisClient });
       await expect(async () => await db.addToList('', { key: 'value' })).rejects.toThrow(
@@ -104,10 +104,8 @@ describe('ManagedRedisClient', () => {
 
       await db.addToList(key, { key: 'value1' }, { key: 'value2' });
 
-      expect(fakeLPushFn).toHaveBeenCalledWith(key, [
-        JSON.stringify({ key: 'value1' }),
-        JSON.stringify({ key: 'value2' }),
-      ]);
+      expect(fakeLPushFn).toHaveBeenCalledWith(key, JSON.stringify({ key: 'value1' }));
+      expect(fakeLPushFn).toHaveBeenCalledWith(key, JSON.stringify({ key: 'value2' }));
     });
   });
 
