@@ -1,29 +1,23 @@
 import InMemoryDatabase from '..';
 
 export default class FakeInMemoryDatabase implements InMemoryDatabase {
-  execTransaction({
-    key,
-    transactionBlock,
-  }: {
-    key: string;
-    transactionBlock: Function;
-  }): Promise<void> {
+  execTransaction(_args: { key: string; transactionBlock: Function }): Promise<void> {
     throw new Error('Method not implemented.');
   }
 
-  get<T>(key: string): Promise<T | undefined> {
+  get<T>(_key: string): Promise<T | undefined> {
     throw new Error('Method not implemented.');
   }
 
-  set(key: string, value: Object, expireTimeInSeconds: number): Promise<void> {
+  set(_key: string, _value: Object, _expireTimeInSeconds: number): Promise<void> {
     throw new Error('Method not implemented.');
   }
 
-  addToList(key: string, ...values: Object[]): Promise<void> {
+  addToList(_key: string, ..._values: Object[]): Promise<void> {
     throw new Error('Method not implemented.');
   }
 
-  getList(key: string): Promise<Object[]> {
+  getList(_key: string): Promise<Object[]> {
     throw new Error('Method not implemented.');
   }
 }
