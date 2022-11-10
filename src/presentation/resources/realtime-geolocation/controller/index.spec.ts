@@ -3,16 +3,27 @@ import FakeInMemoryDatabase from '../../../../data-access/in-memory/fake';
 import FakeLogger from '../../../../application/observability/logger/fake';
 import FakeExpressFactory from '../../../../__mocks__/express/factory';
 
-describe.skip('RealtimeGeolocationController', () => {
+describe('RealtimeGeolocationController', () => {
   const itemId = 'item-id-1';
   const lat = -26.13213;
   const lng = -46.31423;
+
   const fakeAddToListFn = jest.fn();
   const fakeGetListFn = jest.fn();
   const inMemoryDatabaseClient = new FakeInMemoryDatabase();
+
+  const fakeLoggerInfoFn = jest.fn();
   const logger = new FakeLogger();
 
+  const fakeLPushFn = jest.fn();
+  const fakeRPopFn = jest.fn();
+  const multi = { lPush: fakeLPushFn, rPop: fakeRPopFn };
+
+  const fakeLLenFn = jest.fn();
+  const transactionClient = { lLen: fakeLLenFn };
+
   beforeEach(() => {
+    jest.spyOn(logger, 'info').mockImplementation(fakeLoggerInfoFn);
     jest.spyOn(inMemoryDatabaseClient, 'addToList').mockImplementation(fakeAddToListFn);
     jest.spyOn(inMemoryDatabaseClient, 'getList').mockImplementation(fakeGetListFn);
   });
@@ -21,6 +32,13 @@ describe.skip('RealtimeGeolocationController', () => {
     jest.clearAllMocks();
     fakeAddToListFn.mockReset();
     fakeGetListFn.mockReset();
+
+    fakeLoggerInfoFn.mockReset();
+
+    fakeLPushFn.mockReset();
+    fakeRPopFn.mockReset();
+
+    fakeLLenFn.mockReset();
   });
 
   describe('processGeolocationInfo', () => {
@@ -55,6 +73,7 @@ describe.skip('RealtimeGeolocationController', () => {
     it('should return bad request if request body does not contain a "coordinates" field', async () => {
       const req = FakeExpressFactory.createRequest({ params: { itemId }, body: {} });
       const res = FakeExpressFactory.createResponse();
+
       const spyOnStatus = jest.spyOn(res, 'status');
       const spyOnJSON = jest.spyOn(res, 'json');
 
@@ -125,6 +144,13 @@ describe.skip('RealtimeGeolocationController', () => {
     });
 
     it('should add the received coordinates into the cache', async () => {
+      jest.spyOn(transactionClient, 'lLen').mockResolvedValue(0);
+      jest
+        .spyOn(inMemoryDatabaseClient, 'execTransaction')
+        .mockImplementation(async ({ key: _key, transactionBlock }) => {
+          await transactionBlock({ multi, transactionClient });
+        });
+
       jest.spyOn(inMemoryDatabaseClient, 'addToList').mockImplementation(fakeAddToListFn);
 
       const req = FakeExpressFactory.createRequest({
@@ -139,10 +165,21 @@ describe.skip('RealtimeGeolocationController', () => {
       await ctrl.processGeolocationInfo(req, res);
 
       expect(spyOnStatus).toHaveBeenCalledWith(201);
-      expect(fakeAddToListFn).toHaveBeenCalledWith(`${itemId}:latest_coordinates`, [lat, lng]);
+      expect(fakeLPushFn).toHaveBeenCalledWith(
+        `${itemId}:latest_coordinates`,
+        JSON.stringify([lat, lng])
+      );
     });
 
-    it.only('should remove the first entry in the list and add the new one, keeping the list with a max of 100 items', async () => {
+    it('if the coordinates list has 100 items, should remove the first (oldest) entry in the list and add the new one as the most recent', async () => {
+      jest.spyOn(transactionClient, 'lLen').mockResolvedValue(100);
+
+      jest
+        .spyOn(inMemoryDatabaseClient, 'execTransaction')
+        .mockImplementation(async ({ key: _key, transactionBlock }) => {
+          await transactionBlock({ multi, transactionClient });
+        });
+
       const cachedLocations: Array<Array<number>> = [[-26.0, -46.0]];
       for (let i = 0; i < 99; i++) {
         cachedLocations.push([-26.11111, -46.11111]);
@@ -165,7 +202,10 @@ describe.skip('RealtimeGeolocationController', () => {
       await ctrl.processGeolocationInfo(req, res);
 
       expect(spyOnStatus).toHaveBeenCalledWith(201);
-      expect(fakeAddToListFn).toHaveBeenCalledWith(`${itemId}:latest_coordinates`, [lat, lng]);
+      expect(fakeLPushFn).toHaveBeenCalledWith(
+        `${itemId}:latest_coordinates`,
+        JSON.stringify([lat, lng])
+      );
     });
   });
 

@@ -6,27 +6,28 @@ export default class RealtimeGeolocationController {
   private readonly _inMemoryDatabaseClient: InMemoryDatabase;
   private readonly _logger: Logger;
 
-  constructor({
-    logger,
-    inMemoryDatabaseClient,
-  }: {
-    logger: Logger;
-    inMemoryDatabaseClient: InMemoryDatabase;
-  }) {
-    this._inMemoryDatabaseClient = inMemoryDatabaseClient;
-    this._logger = logger;
+  constructor(props: { logger: Logger; inMemoryDatabaseClient: InMemoryDatabase }) {
+    this._inMemoryDatabaseClient = props.inMemoryDatabaseClient;
+    this._logger = props.logger;
 
     this.processGeolocationInfo = this.processGeolocationInfo.bind(this);
     this.getLatestGeolocationInfo = this.getLatestGeolocationInfo.bind(this);
   }
 
+  /*
+    This resource is responsible for processing the incoming geolocation info in realtime. Traffic
+    volume will be high here and performance is a concern, so all 100th geolocation pair is stored
+    in Redis for better read availability. It also filters the noise and gives a more
+    sparse overview of an object's movement in time without a lot of repetitive positions.
+    Every 100th coordinate pair should be stored in a persistent data storage to keep the history
+    of an object's movement in time as well.
+  */
   async processGeolocationInfo(req: Request, res: Response): Promise<Response> {
     const itemId = req.params.itemId;
-    console.log({ itemId });
     if (itemId === 'undefined') return res.status(400).json({ msg: 'Invalid item id' });
 
     const { coordinates } = req.body;
-    console.log(req.body);
+
     if (
       !(
         Array.isArray(coordinates) &&
